@@ -1,0 +1,6 @@
+Na-Cl distance restraint
+ &rst
+  iat=1,2,
+  r1={r1}, r2={r2}, r3={r2}, r4={r4},
+  rk2={r_k}, rk3={r_k},
+  /

@@ -1,0 +1,9 @@
+mdin: 'md_us.in'
+prmtop: 'nacl.prmtop'
+disang_template: 'disang.template'
+startcrds: 'nacl_4.5.ncrst'
+metadata: 'metadata'
+r_min: 2.5
+r_max: 10.0
+r_fac: 1.2
+r_k: 2.0
