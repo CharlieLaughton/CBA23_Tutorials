@@ -37,7 +37,7 @@ def create_disang(template, r):
     Create the content for a disang file from the temp[ate
 
     ]"""
-    params = {"r1": max(1.0, r - 6.0), "r2": r, "r4": r + 6.0, "rk": r_k}
+    params = {"r1": max(1.0, r - 6.0), "r2": r, "r4": r + 6.0, "r_k": r_k}
     return template.format(**params)
 
 
