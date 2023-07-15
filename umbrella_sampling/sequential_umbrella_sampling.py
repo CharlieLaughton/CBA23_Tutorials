@@ -52,27 +52,27 @@ if __name__ == "__main__":
     with open(metadatafile, "w") as f1:
         while r < r_max:
             cycle += 1
-            print(f"Starting umbrella sampling window {cycle}")
+            print(f"\n*** Starting umbrella sampling window {cycle} ***")
             print(
-                f"Umbrella restraint parameters:\n  r_0 = {r:6.3f}\n  r_k = {r_k:6.3f}\n"
+                f"  Umbrella restraint parameters:\n    r_0 = {r:6.3f}\n    r_k = {r_k:6.3f}\n"
             )
             disang.write_text(create_disang(template, r))
             log, finalcrds, trajfile = client.submit(runmd, startcrds, disang)
             try:
                 t = mdt.load(trajfile.result(), top=prmtop)
             except:
-                print("Whoops! MD run failed - stopping.")
+                print("  Whoops! MD run failed - stopping.")
                 raise
             tfilename = f"cycle_{cycle:03d}.nc"
             rfilename = f"cycle_{cycle:03d}.ncrst"
             dfilename = f"cycle_{cycle:03d}.dist"
-            print("MD simulation complete,")
-            print(f" Writing trajectory file {tfilename}")
+            print("  MD simulation complete,")
+            print(f"  Writing trajectory file {tfilename}")
             trajfile.result().save(tfilename)
-            print(f" Writing restart file {rfilename}")
+            print(f"  Writing restart file {rfilename}")
             finalcrds.result().save(rfilename)
             d = mdt.compute_distances(t, [[0, 1]]) * 10.0  # to Angstroms
-            print(f" Writing distance file {dfilename}")
+            print(f"  Writing distance file {dfilename}")
             with open(dfilename, "w") as f2:
                 for frame, dd in enumerate(d):
                     if frame > 9:  # Ignore first 10 values - equilibration
@@ -80,7 +80,7 @@ if __name__ == "__main__":
             f1.write(f"{dfilename} {r} {r_k*2}\n")  # Double r_k - see WHAM manual
             dm = d.mean()
             ds = d.std()
-            print(f" Mean distance this cycle: {dm:6.3f} SD = {ds:6.3f}")
+            print(f"  Mean distance this cycle: {dm:6.3f} SD = {ds:6.3f}\n")
             r = r + ds * r_fac
             startcrds = finalcrds
         print("R_max reached, ending simulations.")
