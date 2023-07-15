@@ -1,0 +1,12 @@
+mdin: 'md.in'
+inpcrd: 'nacl_unbound.ncrst'
+prmtop: 'nacl.prmtop'
+logfile: 'nacl.log.1'
+n_reps: 5
+n_cycles: 500
+edges: [0, 0.26, 0.28, 0.3, 0.32, 0.34, 0.36, 0.38, 0.4, 0.45, 0.5,
+        0.55, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5]
+target_pc: 0.26
+checkpointdir: 'checkdir'
+check_freq: 10
+restart: False
