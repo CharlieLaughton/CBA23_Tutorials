@@ -8,6 +8,7 @@ import mdtraj as mdt
 from pathlib import Path
 import yaml
 import sys
+import os
 
 with open(sys.argv[1]) as f:
     config = yaml.load(f, yaml.SafeLoader)
