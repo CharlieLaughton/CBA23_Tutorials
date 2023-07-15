@@ -1,1 +1,2 @@
 crossflow
+git+http://github.com/CharlieLaughton/WElib.git
