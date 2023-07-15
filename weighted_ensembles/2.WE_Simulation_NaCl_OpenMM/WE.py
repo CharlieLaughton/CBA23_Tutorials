@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-from WElib import Walker, CrossflowPMEMDCudaStepper, Simple1DBinner, SplitMerger, Recycler, Checkpointer, FunctionProgressCoordinator
+from WElib import Walker, FunctionStepper, StaticBinner, SplitMerger, Recycler, Checkpointer, FunctionProgressCoordinator
 from crossflow.clients import Client
+from crossflow.tasks import SubprocessTask
 import mdtraj as mdt
 import numpy as np
 import yaml
@@ -15,6 +16,10 @@ def pc_func(state, topology):
     t = mdt.load(state, top=topology)
     d = mdt.compute_distances(t, [[0, 1]])
     return d[0, 0]
+
+md = SubprocessTask('pmemd.cuda -i md.in -c start.ncrst -p system.prmtop -r final.ncrst')
+md.set_inputs(['md.in', 'start.ncrst', 'system.prmtop'])
+md.set_outputs(['final.ncrst'])
 
 def run(client, config):
     mdin = config['mdin']
@@ -30,14 +35,20 @@ def run(client, config):
     restart = config['restart']
     
     reftraj = mdt.load(inpcrd, top=prmtop)
+    md.set_constant('system.prmtop', prmtop)
+    md.set_constant('md.in', mdin)
 
-    stepper = CrossflowPMEMDCudaStepper(client, mdin, prmtop)
+    def runmd(start, client, md):
+        final = client.submit(md, start)
+        return final.result()
+
+    stepper = FunctionStepper(runmd, client, md)
     pc = FunctionProgressCoordinator(pc_func, reftraj.topology)
-    binner = Simple1DBinner(edges)
-    recycler = Recycler(inpcrd, target_pc, retrograde=True)
+    binner = StaticBinner(edges)
+    recycler = Recycler(target_pc, retrograde=True)
     splitmerger = SplitMerger(n_reps)
 
-    checkpointer = Checkpointer(checkpointdir, mode='rw')
+    #checkpointer = Checkpointer(checkpointdir, mode='rw')
     if restart:
         walkers = checkpointer.load()
     else:
@@ -55,25 +66,24 @@ def run(client, config):
             f.write('{}\n'.format(pcs))
             front = pcs.min()
             walkers = binner.run(walkers)
-            walkers, flux1 = recycler1.run(walkers)
-            if flux1 > 0.0:
-                walkers = pc.run(walkers)
-            walkers, flux2 = recycler2.run(walkers)
-            if flux2  > 0.0:
+            walkers, flux = recycler.run(walkers)
+            if flux > 0.0:
                 walkers = pc.run(walkers)
             walkers = binner.run(walkers)
             walkers = splitmerger.run(walkers)
-            f.write('{} {} {} {}\n'.format(i, front, flux2, len(walkers)))
+            f.write('{} {} {} {}\n'.format(i, front, flux, len(walkers)))
             f.flush()
             if i % check_freq == 0:
-                checkpointer.save(walkers)
+                pass
+                #checkpointer.save(walkers)
 
-    checkpointer.save(walkers)
+    #checkpointer.save(walkers)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('configfile', help='Configuration file (YAML format)')
 args = parser.parse_args()
 with open(args.configfile) as f:
     config = yaml.safe_load(f)
-    client = Client(scheduler_file=config['scheduler_file'])
-    run(client, config)
+    if __name__ == '__main__':
+        client = Client(n_workers=1)
+        run(client, config)
