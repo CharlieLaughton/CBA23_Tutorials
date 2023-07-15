@@ -49,7 +49,13 @@ if __name__ == "__main__":
     startcrds = fh.load(start_crdfile)
     r = r_min
     cycle = 0
-    with open(metadatafile, "w") as f1:
+    if os.path.exists(metadatafile):
+        print('*** Appending new windows to existsing metadata file ***')
+        with open(metadatafile) as f1:
+            data = f1.readlines()
+            cycle = len(data)
+
+    with open(metadatafile, "a") as f1:
         while r < r_max:
             cycle += 1
             print(f"\n*** Starting umbrella sampling window {cycle} ***")
