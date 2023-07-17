@@ -61,7 +61,7 @@ if __name__ == "__main__":
             cycle += 1
             print(f"\n*** Starting umbrella sampling window {cycle} ***")
             print(
-                f"  Umbrella restraint parameters:\n    r_0 = {r:6.3f}\n    r_k = {r_k:6.3f}\n"
+                f"  Umbrella restraint parameters:\n    r2 = {r:6.3f}\n    r_k = {r_k:6.3f}\n"
             )
             disang.write_text(create_disang(template, r))
             log, finalcrds, trajfile = client.submit(runmd, startcrds, disang)
