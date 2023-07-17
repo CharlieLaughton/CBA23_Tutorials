@@ -1,4 +1,4 @@
-mdin: 'md.in'
+mdin: 'md_we.in'
 inpcrd: 'nacl_unbound.ncrst'
 prmtop: 'nacl.prmtop'
 logfile: 'nacl.log.1'
