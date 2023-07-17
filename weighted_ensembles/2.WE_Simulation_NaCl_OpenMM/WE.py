@@ -17,7 +17,7 @@ def pc_func(state, topology):
     d = mdt.compute_distances(t, [[0, 1]])
     return d[0, 0]
 
-md = SubprocessTask('pmemd.cuda -i md.in -c start.ncrst -p system.prmtop -r final.ncrst')
+md = SubprocessTask('pmemd.cuda -i md.in -c start.ncrst -p system.prmtop -r final.ncrst -AllowSmallBox')
 md.set_inputs(['md.in', 'start.ncrst', 'system.prmtop'])
 md.set_outputs(['final.ncrst'])
 
@@ -55,29 +55,22 @@ def run(client, config):
         weight = 1.0 / n_reps
         walkers = [Walker(inpcrd, weight) for i in range(n_reps)]
         #checkpointer.save(walkers)
-    walkers = pc.run(walkers)
+    new_walkers = pc.run(walkers)
     with open(logfile, 'w') as f:
-        pcs = np.array([w.pc for w in walkers])
-        f.write('{}\n'.format(pcs))
+        print(' cycle    n_walkers   left-most bin  right-most bin   flux')
         for i in range(n_cycles):
-            walkers = stepper.run(walkers)
-            walkers = pc.run(walkers)
-            pcs = np.array([w.pc for w in walkers])
-            f.write('{}\n'.format(pcs))
-            front = pcs.min()
-            walkers = binner.run(walkers)
-            walkers, flux = recycler.run(walkers)
-            if flux > 0.0:
-                walkers = pc.run(walkers)
-            walkers = binner.run(walkers)
-            walkers = splitmerger.run(walkers)
-            f.write('{} {} {} {}\n'.format(i, front, flux, len(walkers)))
-            f.flush()
-            if i % check_freq == 0:
-                pass
-                #checkpointer.save(walkers)
+            new_walkers = stepper.run(new_walkers)
+            new_walkers = pc.run(new_walkers)
+            new_walkers = binner.run(new_walkers)
+            new_walkers = recycler.run(new_walkers)
+            if recycler.flux > 0.0:
+                new_walkers = pc.run(new_walkers)
+            new_walkers = binner.run(new_walkers)
+            new_walkers = splitmerger.run(new_walkers)
+            occupied_bins = list(binner.bin_weights.keys())
+            print(f' {i:3d} {len(new_walkers):10d} {min(occupied_bins):12d} {max(occupied_bins):14d} {recycler.flux:20.8f}')
+            f.write(f' {i:3d} {len(new_walkers):10d} {min(occupied_bins):12d} {max(occupied_bins):14d} {recycler.flux:20.8f}\n')
 
-    #checkpointer.save(walkers)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('configfile', help='Configuration file (YAML format)')
